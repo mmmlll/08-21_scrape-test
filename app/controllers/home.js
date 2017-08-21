@@ -1,13 +1,40 @@
 const express = require('express')
 const request = require('request')
 const cheerio = require('cheerio')
-const async   = require('async')
+const async = require('async')
 
 const router = express.Router()
 const mongoose = require('mongoose')
 const Recipe = mongoose.model('Recipe')
 
-  // Article = mongoose.model('Article')
+function scrape (url, callback) {
+  request(url, function (err, response, body) {
+    if (err) return callback(err)
+    const $ = cheerio.load(body)
+
+    let title = $('.entry-title').text()
+    let vidUrl = $('.embed-container').find('iframe').attr('src')
+    let steps = $('.recipe-instructions').find('li').map(function () {
+      let $stepText = $(this).find('p')
+      return $stepText.text()
+    }).get()
+
+    console.log({
+      title,
+      vidUrl,
+      steps
+    })
+
+    callback(
+      null,
+      {
+        title,
+        vidUrl,
+        steps
+      }
+    )
+  })
+}
 
 router.get('/', function (req, res, next) {
   let url = 'http://themeatmen.sg/'
@@ -21,13 +48,11 @@ router.get('/', function (req, res, next) {
       return $div.attr('href')
     }).get()
 
-    return res.send({
-      urls
+    async.concat(urls, scrape, function (err, results) {
+      if (err) return next(err)
+      return res.send(results)
     })
 
-    // let title = $('.entry-title').text()
-    // let vidUrl = $('.embed-container').find('iframe').attr('src')
-    //
     // Recipe.create({
     //   title,
     //   vidUrl,
@@ -38,14 +63,6 @@ router.get('/', function (req, res, next) {
     //   return res.send(createdRecipe)
     // })
   })
-
-  // Article.find(function (err, articles) {
-  //   if (err) return next(err)
-  //   res.render('index', {
-  //     title: 'Scrapie scrape',
-  //     articles: articles
-  //   })
-  // })
 })
 
 module.exports = function (app) {
