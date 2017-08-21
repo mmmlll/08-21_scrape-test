@@ -4,6 +4,7 @@ const cheerio = require('cheerio')
 
 const router = express.Router()
 const mongoose = require('mongoose')
+const Recipe = mongoose.model('Recipe')
 
   // Article = mongoose.model('Article')
 
@@ -22,10 +23,14 @@ router.get('/', function (req, res, next) {
       return $stepText.text()
     }).get()
 
-    return res.send({
+    Recipe.create({
       title,
       vidUrl,
       steps
+    }, function (err, createdRecipe) {
+      if (err) return next(err)
+
+      return res.send(createdRecipe)
     })
   })
 
