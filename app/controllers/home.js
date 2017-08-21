@@ -3,11 +3,12 @@ const request = require('request')
 const cheerio = require('cheerio')
 
 const router = express.Router()
-  // mongoose = require('mongoose')
+const mongoose = require('mongoose')
+
   // Article = mongoose.model('Article')
 
 router.get('/', function (req, res, next) {
-  let url = 'http://themeatmen.sg/sg-bbq-chicken-wings/'
+  let url = 'http://themeatmen.sg/eggplant-with-minced-pork/'
 
   request(url, function (err, response, body) {
     if (err) return next(err)
@@ -16,9 +17,15 @@ router.get('/', function (req, res, next) {
     let title = $('.entry-title').text()
     let vidUrl = $('.embed-container').find('iframe').attr('src')
 
+    let steps = $('.recipe-instructions').find('li').map(function (index, step) {
+      let $stepText = $(this).find('p')
+      return $stepText.text()
+    }).get()
+
     return res.send({
       title,
-      vidUrl
+      vidUrl,
+      steps
     })
   })
 
